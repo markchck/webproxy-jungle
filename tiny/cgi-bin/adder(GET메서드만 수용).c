@@ -23,13 +23,12 @@ int main(void) {
   //   n2 = atoi(arg2);
   // }
 
-  //sscanf 쓰는 방법
   if ((buf = getenv("QUERY_STRING")) != NULL) {
     // buf = ?first=1&second=2
     p = strchr(buf, '&');
     *p = '\0';
     sscanf(buf, "first=%d", &n1);
-    sscanf(p+1, "second=%d", &n2);
+    sscanf(buf, "second=%d", &n2);
   }
 
   //석규 방식

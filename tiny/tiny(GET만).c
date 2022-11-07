@@ -11,9 +11,9 @@
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
-void serve_static(int fd, char *filename, int filesize, char *method);
+void serve_static(int fd, char *filename, int filesize);
 void get_filetype(char *filename, char *filetype);
-void serve_dynamic(int fd, char *filename, char *cgiargs, char* method);
+void serve_dynamic(int fd, char *filename, char *cgiargs);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg,
                  char *longmsg);
 
@@ -65,17 +65,8 @@ void doit(int fd)
   //ssacnf는 buf에 담긴 정보(즉, connfd)를 꺼내는 놈 (메소드가 get인지 뭔지, uri가 뭔지, http version은 뭔지)
   sscanf(buf, "%s %s %s", method, uri, version);
   
-  //숙제 11.11 (GET메서드만 받는 경우)
-    // //strcasecmp는 비교하는거라 빼기라고 생각하면 됨. method가 "GET"이면 두번째 인자인 "GET"이랑 빼면 0이니까 False이고 if문에 안들어감.
-    // if(strcasecmp(method, "GET")){
-    //   // GET말고 다른게 들어오면 tiny는 GET만 처리하는 상황이라 알려줌
-    //   clienterror(fd, method, "501", "Not implemented", "Tiny does not implement this method");
-    //   return;
-    // }
-
-  //숙제 11.11 (HEAD메서드도 받는 경우)
-  //strcasecmp는 비교하는거라 빼기라고생각하면 됨. method가 "GET"이면 두번째 인자인 "GET"이랑 빼면 0이니까 False이고 if문에 안들어감.
-  if(! ((strcasecmp(method, "GET") == 0) || (strcasecmp(method, "HEAD")==0) ) ){
+  //strcasecmp는 비교하는거라 빼기라고 생각하면 됨. method가 "GET"이면 두번째 인자인 "GET"이랑 빼면 0이니까 False이고 if문에 안들어감.
+  if(strcasecmp(method, "GET")){
     // GET말고 다른게 들어오면 tiny는 GET만 처리하는 상황이라 알려줌
     clienterror(fd, method, "501", "Not implemented", "Tiny does not implement this method");
     return;
@@ -102,7 +93,7 @@ void doit(int fd)
       return;
     }
     // 다 통과했으면 정적파일 serve함수로 이동
-    serve_static(fd, filename, sbuf.st_size, method);
+    serve_static(fd, filename, sbuf.st_size);
   }
   //정적 파일이 아니면? ->동적이면?
   else {
@@ -111,7 +102,7 @@ void doit(int fd)
       return;
     }
     //동적 컨텐츠 함수 실행
-    serve_dynamic(fd, filename, cgiargs, method);
+    serve_dynamic(fd, filename, cgiargs);
   }
 }
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg){
@@ -179,8 +170,7 @@ int parse_uri(char *uri, char *filename, char *cgiargs){
     return 0;
   }
 }
-void serve_static(int fd, char *filename, int filesize, char *method)
-{
+void serve_static(int fd, char *filename, int filesize){
   int srcfd;
   char *srcp, filetype[MAXLINE], buf[MAXBUF];
 
@@ -209,27 +199,29 @@ void serve_static(int fd, char *filename, int filesize, char *method)
   // Contnent-type: text/html
   printf("%s", buf);
   
-  if (strcasecmp(method, "HEAD") == 0)
-    return;
-  
+  //파일을 열고 그 파일에 대응되는 식별자를 하나 주고
+  srcfd=Open(filename, O_RDONLY,0);
 
-    //파일을 열고 그 파일에 대응되는 식별자를 하나 주고
-    srcfd=Open(filename, O_RDONLY,0);
+  // 숙제문제 11.9(mmap으로 메모리 매핑시)
+    // //Mmap으로 파일의 공간을 배정한다.
+    // //Mmap은 파일 내용을 메모리에 매핑 
+    // srcp = Mmap(0,filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
 
-    // 숙제문제 11.9(mmap으로 메모리 매핑시)
-      //Mmap으로 파일의 공간을 배정한다.
-      //Mmap은 파일 내용을 메모리에 매핑 
-      srcp = Mmap(0,filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+    // // Mmap으로 메모리에 담았으니 srcfd식별자 반환해줘(안그러면 메모리 누수 발생)
+    // Close(srcfd);
+    // // 사용자가 요청한 정적 파일을 fd식별자에 넣고 
+    // Rio_writen(fd, srcp, filesize);
+    // // Mmap으로 만든 메모리도 반환
+    // Munmap(srcp,filesize);
 
-      // Mmap으로 메모리에 담았으니 srcfd식별자 반환해줘(안그러면 메모리 누수 발생)
-      Close(srcfd);
-      // 사용자가 요청한 정적 파일을 fd식별자에 넣고 
-      Rio_writen(fd, srcp, filesize);
-      // Mmap으로 만든 메모리도 반환
-      Munmap(srcp,filesize);
-
-  }
-
+  // 숙제문제 11.9(malloc으로 메모리 매핑시)
+    srcp = (char*)Malloc(filesize);
+    Rio_readn(srcfd, srcp, filesize);
+    Close(srcfd);
+    // 사용자가 요청한 정적 파일을 fd식별자에 넣고 
+    Rio_writen(fd, srcp, filesize);
+    free(srcp);
+}
 void get_filetype(char *filename, char *filetype){
   if(strstr(filename, ".html"))
     strcpy(filetype, "text/html");
@@ -249,7 +241,7 @@ void get_filetype(char *filename, char *filetype){
   else
     strcpy(filetype, "text/plain");
 }
-void serve_dynamic(int fd, char *filename, char *cgiargs, char *method){
+void serve_dynamic(int fd, char *filename, char *cgiargs){
   char buf[MAXLINE], *emptylist[]={NULL};
   
   sprintf(buf, "HTTP/1.0 200 OK\r\n");
@@ -262,8 +254,6 @@ void serve_dynamic(int fd, char *filename, char *cgiargs, char *method){
     // setenv는 환경변수 값을 추가하거나 바꾸는 함수
     // 환경변수 내에 QUERY_STRING가 존재하면 cgiargs로 덮어쓰고, 없으면 추가한다.
     setenv("QUERY_STRING", cgiargs,1);
-    setenv("REQUEST_METHOD", method,1);
-    
     //Dup2: 식별자를 복사한다.
     Dup2(fd, STDOUT_FILENO);
     // Execve: 파일을 실행한다.
