@@ -4,19 +4,27 @@
 #include "../csapp.h"
 
 int main(void) {
-  char *buf, *p;
+  char *buf, *p, *second_args_start, *first_args_start;
   char arg1[MAXLINE], arg2[MAXLINE], content[MAXLINE];
   int n1=0, n2=0;
 
   /* Extract the two arguments */
   if ((buf = getenv("QUERY_STRING")) != NULL) {
+    // buf = ?first=1&second=2
     p = strchr(buf, '&');
     *p = '\0';
-    sscanf(buf, "first=%d", &n1);
-    sscanf(p+1, "second=%d", &n2);
+    second_args_start = strchr(p, '=');
+    strcpy(arg2, second_args_start+1);
+
+    first_args_start= strchr(buf, '=');
+    strcpy(arg1, first_args_start+1);
+    
+    n1 = atoi(arg1);
+    n2 = atoi(arg2);
   }
 
   /* Make the response body */
+  sprintf(content, "QUERY_STRING=%s", buf);
   sprintf(content, "Welcome to add.com: ");
   sprintf(content, "%sTHE Internet addition portal.\r\n<p>", content);
   sprintf(content, "%sThe answer is: %d + %d = %d\r\n<p>",
