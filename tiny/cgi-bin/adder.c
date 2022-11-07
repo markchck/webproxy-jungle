@@ -12,7 +12,7 @@ int main(void) {
   if ((buf = getenv("QUERY_STRING")) != NULL) {
     // buf = ?first=1&second=2
     p = strchr(buf, '&');
-    *p = '\0';
+    // *p = '\0';
     second_args_start = strchr(p, '=');
     strcpy(arg2, second_args_start+1);
 
@@ -23,7 +23,30 @@ int main(void) {
     n2 = atoi(arg2);
   }
 
+  //석규 방식
+  // if ((buf = getenv("QUERY_STRING")) != NULL)
+  // // // if ((buf = "?first=1&second=2") != NULL) {
+  // {
+  //   p = strchr(buf, '&');
+  //   // *p = '\0';
+  //   strcpy(arg1, buf);
+  //   strcpy(arg2, p+1);
+
+  //   p = strchr(arg1, '=');
+  //   *p = '\0';
+  //   strcpy(arg1, p+1);
+    
+  //   p = strchr(arg2, '=');
+  //   *p = '\0';
+  //   strcpy(arg2, p+1);
+
+  //   n1 = atoi(arg1);
+  //   n2 = atoi(arg2);
+  // }
+
+
   /* Make the response body */
+  // printf("%s,%s", buf, p);
   sprintf(content, "QUERY_STRING=%s", buf);
   sprintf(content, "Welcome to add.com: ");
   sprintf(content, "%sTHE Internet addition portal.\r\n<p>", content);
