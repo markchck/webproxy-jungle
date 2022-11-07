@@ -62,7 +62,7 @@ void doit(int fd)
   printf("Request headers: \n");
   // 예) HTTP/1.0 200 OK 출력하고
   printf("%s", buf);
-  //ssacnf는 buf에 담긴 정보(즉, connfd) 를 꺼내는 중 (메소드가 get인지 뭔지, uri가 뭔지, http version은 뭔지)
+  //ssacnf는 buf에 담긴 정보(즉, connfd)를 꺼내는 놈 (메소드가 get인지 뭔지, uri가 뭔지, http version은 뭔지)
   sscanf(buf, "%s %s %s", method, uri, version);
   //strcasecmp는 비교하는거라 빼기라고 생각하면 됨. method가 "GET"이면 두번째 인자인 "GET"이랑 빼면 0이니까 False이고 if문에 안들어감.
   if(strcasecmp(method, "GET")){
@@ -220,7 +220,6 @@ void serve_static(int fd, char *filename, int filesize){
     Rio_writen(fd, srcp, filesize);
     free(srcp);
 }
-
 void get_filetype(char *filename, char *filetype){
   if(strstr(filename, ".html"))
     strcpy(filetype, "text/html");
@@ -240,7 +239,6 @@ void get_filetype(char *filename, char *filetype){
   else
     strcpy(filetype, "text/plain");
 }
-
 void serve_dynamic(int fd, char *filename, char *cgiargs){
   char buf[MAXLINE], *emptylist[]={NULL};
   
@@ -254,9 +252,9 @@ void serve_dynamic(int fd, char *filename, char *cgiargs){
     // setenv는 환경변수 값을 추가하거나 바꾸는 함수
     // 환경변수 내에 QUERY_STRING가 존재하면 cgiargs로 덮어쓰고, 없으면 추가한다.
     setenv("QUERY_STRING", cgiargs,1);
-    //Dup2 식별자를 복사한다.
+    //Dup2: 식별자를 복사한다.
     Dup2(fd, STDOUT_FILENO);
-    // Execve 파일을 실행한다.
+    // Execve: 파일을 실행한다.
     Execve(filename, emptylist, environ);
   }
   Wait(NULL);
