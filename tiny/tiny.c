@@ -62,7 +62,7 @@ void doit(int fd)
   printf("Request headers: \n");
   // 예) HTTP/1.0 200 OK 출력하고
   printf("%s", buf);
-  //ssacnf는 buf에 담긴 정보(즉, connfd) 를 꺼내는 중 (메소드가 get인지 뭔지, uri가 뭔지, version이 뭔지는 잘 모르겠음.)
+  //ssacnf는 buf에 담긴 정보(즉, connfd) 를 꺼내는 중 (메소드가 get인지 뭔지, uri가 뭔지, http version은 뭔지)
   sscanf(buf, "%s %s %s", method, uri, version);
   //strcasecmp는 비교하는거라 빼기라고 생각하면 됨. method가 "GET"이면 두번째 인자인 "GET"이랑 빼면 0이니까 False이고 if문에 안들어감.
   if(strcasecmp(method, "GET")){
@@ -199,15 +199,26 @@ void serve_static(int fd, char *filename, int filesize){
   
   //파일을 열고 그 파일에 대응되는 식별자를 하나 주고
   srcfd=Open(filename, O_RDONLY,0);
-  //Mmap으로 파일의 공간을 배정한다.
-  //Mmap은 파일 내용을 메모리에 매핑 
-  srcp = Mmap(0,filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
-  // Mmap으로 메모리에 담았으니 srcfd식별자 반환해줘(안그러면 메모리 누스 발생)
-  Close(srcfd);
-  // 사용자가 요청한 정적 파일을 fd식별자에 넣고 
-  Rio_writen(fd, srcp, filesize);
-  // Mmap으로 만든 메모리도 반환
-  Munmap(srcp,filesize);
+
+  // 숙제문제 11.9(mmap으로 메모리 매핑시)
+    // //Mmap으로 파일의 공간을 배정한다.
+    // //Mmap은 파일 내용을 메모리에 매핑 
+    // srcp = Mmap(0,filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+
+    // // Mmap으로 메모리에 담았으니 srcfd식별자 반환해줘(안그러면 메모리 누수 발생)
+    // Close(srcfd);
+    // // 사용자가 요청한 정적 파일을 fd식별자에 넣고 
+    // Rio_writen(fd, srcp, filesize);
+    // // Mmap으로 만든 메모리도 반환
+    // Munmap(srcp,filesize);
+
+  // 숙제문제 11.9(malloc으로 메모리 매핑시)
+    srcp = (char*)Malloc(filesize);
+    Rio_readn(srcfd, srcp, filesize);
+    Close(srcfd);
+    // 사용자가 요청한 정적 파일을 fd식별자에 넣고 
+    Rio_writen(fd, srcp, filesize);
+    free(srcp);
 }
 
 void get_filetype(char *filename, char *filetype){
@@ -222,6 +233,9 @@ void get_filetype(char *filename, char *filetype){
 
   else if (strstr(filename, ".jpg"))
     strcpy(filetype, "image/jpeg");
+
+  else if (strstr(filename, ".mp4"))
+    strcpy(filetype, "video/mp4");
 
   else
     strcpy(filetype, "text/plain");
