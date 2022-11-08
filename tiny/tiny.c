@@ -60,11 +60,14 @@ void doit(int fd)
   //rio에 정보를 buf로 넘김
   Rio_readlineb(&rio, buf, MAXLINE);
   printf("Request headers: \n");
-  // 예) HTTP/1.0 200 OK 출력하고
+  
+  //실제 ./tiny 8000으로 돌려보면 
+  // GET /sample.mp4 HTTP/1.1이 buf이다.
   printf("%s", buf);
+  
   //ssacnf는 buf에 담긴 정보(즉, connfd)를 꺼내는 놈 (메소드가 get인지 뭔지, uri가 뭔지, http version은 뭔지)
   sscanf(buf, "%s %s %s", method, uri, version);
-  
+  printf("%s,%s,%s", method,uri,version);
   //숙제 11.11 (GET메서드만 받는 경우)
     // //strcasecmp는 비교하는거라 빼기라고 생각하면 됨. method가 "GET"이면 두번째 인자인 "GET"이랑 빼면 0이니까 False이고 if문에 안들어감.
     // if(strcasecmp(method, "GET")){

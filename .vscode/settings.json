@@ -4,5 +4,6 @@
         "stddef.h": "c",
         "stdio.h": "c"
     },
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "C_Cpp.errorSquiggles": "Disabled"
 }

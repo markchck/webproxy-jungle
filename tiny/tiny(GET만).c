@@ -63,6 +63,7 @@ void doit(int fd)
   // 예) HTTP/1.0 200 OK 출력하고
   printf("%s", buf);
   //ssacnf는 buf에 담긴 정보(즉, connfd)를 꺼내는 놈 (메소드가 get인지 뭔지, uri가 뭔지, http version은 뭔지)
+  //P916그림 11.24에 5번라인 GET / HTTP / 1.1
   sscanf(buf, "%s %s %s", method, uri, version);
   
   //strcasecmp는 비교하는거라 빼기라고 생각하면 됨. method가 "GET"이면 두번째 인자인 "GET"이랑 빼면 0이니까 False이고 if문에 안들어감.
