@@ -19,10 +19,9 @@ static const char *host_key = "Host";
 
 /*프로토타입*/
 void doit(int connfd);
-void parse_uri(char *uri,char *hostname,char *path,char *port);
+int parse_uri(char *uri,char *hostname,char *path,char *port);
 void build_http_header(char *http_header,char *hostname,char *path,int port,rio_t *client_rio);
 int connect_endServer(char *hostname,char *port,char *http_header);
-void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 
 //프록시 듣기모드 온
 int main(int argc,char **argv)
@@ -59,9 +58,10 @@ void doit(int connfd)
   {
     int is_static;
     struct stat sbuf;
-    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
+    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], new_buf[MAXLINE];
     char hostname[MAXLINE], path[MAXLINE], port[MAXLINE];
     rio_t rio;
+    int parse_result;
 
     /* Read request line and headers*/
     //connfd정보를 rio에 줌
@@ -75,59 +75,61 @@ void doit(int connfd)
     //GET,   naver.com,  http/1.0 클라이언트가 텔넷으로 요청한 정보가 파싱 전 상태로 나옴
     //printf("%s,%s,%s\n", method,uri,version);
 
-    if(! ((strcasecmp(method, "GET") == 0) || (strcasecmp(method, "HEAD")==0) ) ){
-      // GET말고 다른게 들어오면 tiny는 GET만 처리하는 상황이라 알려줌
-      clienterror(connfd, method, "501", "Not implemented", "Tiny does not implement this method");
-      return;
-    }
+    // parse_uri(uri, hostname, path, port);
+    // Rio_readinitb(&rio,parse_result);
+    // Rio_readlineb(&rio,new_buf, MAXLINE);
+    // sprintf(new_buf, "%s %s %s\r\n", hostname, path, port);
+    // printf("%s\n", new_buf);
+    // printf("%s,%s,%s,%s\n", uri, hostname, path, port);
+
     parse_uri(uri, hostname, path, port);
-    printf("%s,%s,%s,%s\n", uri, hostname, path, port);
+    printf("doit 안에서 찍음 uri: %s, hostname: %s, path: %s, port: %s\n", uri, hostname, path, port);
   }
 }
 
-void parse_uri(char *uri, char *hostname, char *path, char *port){
+int parse_uri(char *uri, char *hostname, char *path, char *port){
   // /hub/index.html,
   // printf("%s,\n", uri);
-  port = "80";
   char* full_url;
   char* path_start;
   char* port_start;
-  char* end_of_path;
   
+  //full_url: http://naver.com/index.html에서 n이후를 가리킴
   full_url = strstr(uri,"//")+2;
+  //path_start: /index.html에서 /를 가리킴
   path_start=strstr(full_url, "/");
+  // path_start를 \0으로 만듦으로써 full_url을 naver.com까지만 자름
   *path_start = '\0';
 
-  path = (path_start+1);
-  hostname = full_url;
-  // printf("hostname을 출력: %s\n", hostname); www.cmu.edu
-  // printf("path를 출력: %s\n", path); hub/index.html
+  //path는 index.html~가 됨
+  // 이렇게 문자열을 복사하면 안됨 (oit으로 넘어갈 때는 doit의 hostname이 parse_uri가 넘긴 path을 덮어버림 )
+  // path = (path_start+1);
+  strcpy(path ,path_start+1);
+  
+  // full_rul을 hostname으로 얕은 복사함(따로 메모리를 저장하지 않고 주소값만 복사)
+  // 이렇게 문자열을 복사하면 안됨 (doit으로 넘어갈 때는 doit의 hostname이 parse_uri가 넘긴 hostname을 덮어버림 )
+  // hostname = full_url;
+  strcpy(hostname, full_url);
+
+  // 이상유무 테스트
+    // printf("hostname을 출력: %s\n", hostname); www.cmu.edu
+    // printf("path를 출력: %s\n", path); hub/index.html
   
   //hostname과 path를 구분하고, 포트를 입력하는 경우 그 포트를 포트번호로하고, 입력하지 않은 경우 80으로 설정해줘야함.
   port_start=strstr(path, ":");
   if (port_start != NULL){
     *port_start='\0'; //hub/index.html:8001에서 :8001 떼고 hub/index.html 이것만 path로.
-    port = port_start +1; //port는 8001이 들어가있음
+
+    //port는 8001이 들어가있음
+    // 이렇게 문자열을 복사하면 안됨 (doit으로 넘어갈 때는 doit의 port가 parse_uri가 넘긴 port를 덮어버림 )  
+    // port = port_start +1; 
+    strcpy(port ,port_start+1);
+  }
+  else{
+    strcpy(port, "80");
   }
   // else 입력하지 않은 경우는 안해줘도 되는듯? (port는 이미 80으로 선언했고 path도 이미 hub/index.html임)
 
-  printf("%s,%s,%s,%s\n", uri, hostname, path, port);
-}
-void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
-{
-  char buf[MAXLINE], body[MAXBUF];
-
-  sprintf(body, "<html><title>Tiny Error</title>");
-  sprintf(body, "%s<body bgcolor=""ffffff"">\r\n", body);
-  sprintf(body, "%s%s: %s\r\n", body, longmsg, cause);
-  sprintf(body, "%s<p>%s: %s\r\n", body, longmsg, cause);
-  sprintf(body, "%s<hr><em>The Tiny Web server</em>\r\n", body);
-
-  sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
-  Rio_writen(fd, buf, strlen(buf));
-  sprintf(buf, "Content-type: text/html\r\n");
-  Rio_writen(fd, buf, strlen(buf));
-  sprintf(buf, "Content-length: %d\r\n\r\n", (int)strlen(body));
-  Rio_writen(fd, buf, strlen(buf));
-  Rio_writen(fd, body, strlen(body));
+  printf("파스uri 안에서 찍음 uri: %s, hostname: %s, path: %s, port: %s\n", uri, hostname, path, port);
+  return 0;
 }

@@ -1,14 +1,12 @@
-#include <stdio.h>
-void parse_uri(int *port);
+int main(){
+  char a[10];
+  parse(a);	
 
-int main(void){
-  int port;
-  port = 1;
-  printf("넘기기전 port의 주소 : %p\n", &port);
-  parse_uri(&port);
+  printf("parse의 결괏값을 받은 a : %s가 왔다. \n", a);
 }
 
-void parse_uri(int *port){
-    printf("넘긴후 port의 주소 : %p\n", port);
-    // printf("%i\n", *port);
+int parse(char *a){
+  char* b = "hi";
+  a = b;
+  printf("parse내에서 찍은 a : %s가 왔다. \n", a);
 }
