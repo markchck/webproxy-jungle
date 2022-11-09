@@ -80,9 +80,8 @@ void doit(int connfd)
       clienterror(connfd, method, "501", "Not implemented", "Tiny does not implement this method");
       return;
     }
-    
     parse_uri(uri, hostname, path, port);
-    printf("uri: %s, hostname: %s, path: %s, port: %s\n", uri, hostname, path, port);
+    printf("%s,%s,%s,%s\n", uri, hostname, path, port);
   }
 }
 
@@ -112,7 +111,7 @@ void parse_uri(char *uri, char *hostname, char *path, char *port){
   }
   // else 입력하지 않은 경우는 안해줘도 되는듯? (port는 이미 80으로 선언했고 path도 이미 hub/index.html임)
 
-  printf("uri: %s, hostname: %s, path: %s, port: %s\n", uri, hostname, path, port);
+  printf("%s,%s,%s,%s\n", uri, hostname, path, port);
 }
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
 {
