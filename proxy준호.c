@@ -42,23 +42,21 @@ int main(int argc, char **argv) {
   while (1) {
     clientlen = sizeof(clientaddr);
     connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-    if (Fork() == 0) {  /* 동시성 처리를 위해 자식 프로세스 생성 */
-      Close(listenfd);
+    Close(listenfd);
+    Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
+    printf("Accepted connection from (%s, %s)\n", hostname, port);
 
-      Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
-      printf("Accepted connection from (%s, %s)\n", hostname, port);
-
-      /* valid check here */
-      if (!(doit(connfd, host_for_server, port_for_server, buf_for_server))) {
-        clientfd = Open_clientfd(host_for_server, port_for_server);
-        send_and_receive(clientfd, connfd, buf_for_server);
-        Close(clientfd);
-      }
-      else printf("URI Error: 올바르지 않은 URI입니다.\n");
-
-      Close(connfd);
-      exit(0);
+    /* valid check here */
+    if (!(doit(connfd, host_for_server, port_for_server, buf_for_server))) {
+      clientfd = Open_clientfd(host_for_server, port_for_server);
+      send_and_receive(clientfd, connfd, buf_for_server);
+      Close(clientfd);
     }
+    else printf("URI Error: 올바르지 않은 URI입니다.\n");
+
+    Close(connfd);
+    exit(0);
+
     Close(connfd);
   }
 
