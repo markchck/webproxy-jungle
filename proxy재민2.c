@@ -183,9 +183,9 @@ int send_and_receive(int clientfd, int connfd, char *buf) {
   //get_buf에는 찐서버에게 받은 정보가 들어있다.
 
   while (strcmp(get_buf, "\r\n")) {  /* 헤더 먼저 받기. */
-    printf("getbuf에 들어있던 정보 %s\n", get_buf);
+    printf("getbuf에 들어있던 정보 %s\n", get_buf); //HTTP/1.0 200 OK
     n = Rio_readlineb(&rio, get_buf, MAXLINE);
-    printf("Rio한 뒤 getbuf에 있는 정보 %s\n", get_buf);
+    printf("Rio한 뒤 getbuf에 있는 정보 %s\n", get_buf); //출력 없음
     
     if ((ptr = strstr(get_buf, "length:"))) {
       ptr += 8;

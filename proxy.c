@@ -182,6 +182,7 @@ int send_and_receive(int clientfd, int connfd, char *buf) {
   //getbuf가 그냥 빈칸이면 while문 패스하고 뭔가 차있으면 while들어옴.
   //get_buf에는 찐서버에게 받은 정보가 들어있다.
 
+  //서버가 응답할 때  aaaaa\n bbbb\n cccc\n 이렇게 한 줄로 쭉 준다는 사실! 인간의 눈처럼 줄바꿈해서 주지 않고 \n을 보고 파악함.
   while (strcmp(get_buf, "\r\n")) {  /* 헤더 먼저 받기. */
     printf("getbuf에 들어있던 정보 %s\n", get_buf); //HTTP/1.0 200 OK
     n = Rio_readlineb(&rio, get_buf, MAXLINE);
